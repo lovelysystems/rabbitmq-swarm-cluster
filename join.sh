@@ -10,7 +10,7 @@
 # Wait a random amount of seconds (between 1 and 10 seconds) to get in
 # parallel started instances a littel bit out of sync.
 echo "Wait random duration..."
-sleep $[ ( $RANDOM % 10 )  + 1 ]s
+sleep $[ ( $RANDOM % 10 )  + 10 ]s
 
 echo "Try to join rabbitmq cluster..."
 
