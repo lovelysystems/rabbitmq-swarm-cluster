@@ -47,6 +47,7 @@ then
   echo "Found nodes of cluster:"
   echo $nodes
   rabbitmqctl stop_app
+  rabbitmqctl reset
 else
   echo "Found standalone setup."
   exit 0
@@ -71,7 +72,6 @@ do
         echo "Try to reach $node"
         if nc -z "$node" 15672
         then
-            rabbitmqctl reset
             rabbitmqctl join_cluster rabbit@$node
             if [[ $? == "0" ]]
             then
