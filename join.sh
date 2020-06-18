@@ -14,28 +14,24 @@ sleep $[ ( $RANDOM % 10 )  + 10 ]s
 
 echo "Try to join rabbitmq cluster..."
 
-# busybox 'nslookup' required
+
 # Try to determine all hosts of this service (given by env var `SERVICE_NAME`).
-# Sometimes wrong hostnames are returned, hence the retry functionality.
-for i in `seq 5`
+# host command required, provided by bind-tools package
+# Remove ourselves from list
+hostIps=($(host tasks.$SERVICE_NAME | awk '{print $4}'))
+nodes=()
+for hostIp in ${hostIps[@]}
 do
-  if [[ "$i" > "5" ]]
-  then
-    echo "Retry count exceeded"
-    exit 1
+  echo "checking $hostIp"
+  myIp=$(ip a | grep inet | grep $hostIp | wc -l)
+  echo "myIp = $myIp"
+  if [ $myIp == 0 ]; then
+    hostName=$(host $hostIp | awk '{print $NF}' | cut -d. -f1-3)
+    echo "adding $hostName"
+    nodes+=($hostName)
   fi
-  retry=false
-  nodes=`nslookup tasks.$SERVICE_NAME 2>/dev/null | grep -v $(hostname) | grep Address | awk '{print $4}' | cut -d. -f1-3`
-  for node in $nodes
-  do
-    if [[ "$node" != $SERVICE_NAME* ]]
-    then
-      retry=true
-      break
-    fi
-  done
-  if ! $retry; then break; fi
 done
+
 
 # If the service is configured with just one replica this rabbitmq instance is
 # running in standalone mode and no further cluster joining arithmetic is
@@ -68,7 +64,7 @@ do
             rabbitmqctl start_app
             exit 0
         fi
-        # of peer is reachable try to join the cluster of that host
+        # if peer is reachable try to join the cluster of that host
         echo "Try to reach $node"
         if nc -z "$node" 15672
         then
