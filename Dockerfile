@@ -1,4 +1,7 @@
-FROM rabbitmq:3.6.11-management-alpine
+FROM rabbitmq:3.8.5-management-alpine
+
+# we need host/dig
+RUN apk add bind-tools
 
 ADD join.sh /
 
